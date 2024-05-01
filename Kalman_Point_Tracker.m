@@ -7,6 +7,15 @@ close all;
 video_path='/Users/diphda/Desktop/ERCI/Kalman_Point_Tracker/example_video.mp4';%full file path
 search_size = 10;%yellow box size
 
+%configure point tracker
+max_err=2;
+
+%configure kalman filter
+MotionModel = 'ConstantVelocity';
+InitialEstimateError = [1 1]*1e5;
+MotionNoise = [100 100];
+MeasurementNoise = 20;
+
 %% Pre-processing
 video_reader = VideoReader(video_path);
 object_frame = readFrame(video_reader);
@@ -28,15 +37,8 @@ close;
 % object_frame = imadjust(object_frame, [0.3, 0.7], [0, 1]);
 select_points = detectMinEigenFeatures(im2gray(object_frame),'ROI',interest_region);
 
-%configure point tracker
-tracker = vision.PointTracker('MaxBidirectionalError',2);
+tracker = vision.PointTracker('MaxBidirectionalError',max_err);
 initialize(tracker,select_points.Location,object_frame);
-
-%configure kalman filter
-MotionModel = 'ConstantVelocity';
-InitialEstimateError = [1 1]*1e5;
-MotionNoise = [100 100];
-MeasurementNoise = 20;
 
 kf = cell(size(select_points, 1), 1);
 sum_points=cell(size(select_points, 1), 1);
@@ -56,9 +58,6 @@ limit_points=[];
 
 while hasFrame(video_reader)
     frame = readFrame(video_reader);
-
-    % frame = imadjust(frame, [0.3, 0.7], [0, 1]);
-    % frame = im2gray(frame);
     
     [mov_points, validity] = tracker(frame);
 
